@@ -1,8 +1,8 @@
 const express = require("express");
-const { port, hostback } = require("./config/config");
+const { port: configPort, hostback } = require("./config/config");
 const routerApi = require("./routes/index");
 const connect = require("./libs/mongoose");
-const createRoles = require("./seeders/seeder");
+const { crearAdmin } = require("./seeders/seeder");
 const cors = require("cors");
 const helmet = require("helmet");
 const app = express();
@@ -14,8 +14,24 @@ const http = require('http');
 
 const fileSystem = require("fs");
 
-connect();
-createRoles;
+const PORT = process.env.PORT || process.env.APP_PORT || configPort || 3300;
+
+const start = async () => {
+  try {
+    await connect();
+    // Crear roles y admin sólo después de conexión exitosa
+    await crearAdmin();
+
+    const server = http.createServer(app).listen(PORT, () => {
+      console.log(`APP corriendo por el puerto ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Fallo iniciando la app:', error.message);
+    process.exit(1);
+  }
+};
+
+start();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
@@ -41,6 +57,4 @@ const path = require('path');
 }); */
 
 // Crear un servidor HTTP - CONEXIÓN SIN CIFRADO DE DATOS
-const server = http.createServer(app).listen(port, () => {
-  console.log(`APP corriendo por el puerto ${port}`);
-});
+// El servidor se inicia desde start()

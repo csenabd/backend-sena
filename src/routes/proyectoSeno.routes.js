@@ -17,20 +17,24 @@ const {
 const controller = new ProyectoSenoController();
 const publicDir = path.resolve(__dirname, "../../public");
 
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  auth: {
-    // user: process.env.ADDRESS_EMAIL,
-    // pass: process.env.PASSWORD_EMAIL,
-    user: "cloudsena2@gmail.com",
-    pass: "cloud3406",
-  },
-});
+const transporter = (() => {
+  const user = process.env.ADDRESS_EMAIL;
+  const pass = process.env.PASSWORD_EMAIL;
+  if (!user || !pass) {
+    console.warn('ADDRESS_EMAIL or PASSWORD_EMAIL not set; email sending disabled.');
+    return null;
+  }
+  return nodemailer.createTransport({
+    service: "Gmail",
+    auth: { user, pass },
+  });
+})();
 
 const sendEmail = async (to, subject, text) => {
   try {
+    if (!transporter) throw new Error('Email transporter not configured');
     await transporter.sendMail({
-      from: "cloudsena2@gmail.com",
+      from: process.env.ADDRESS_EMAIL,
       to,
       subject,
       html: text,
